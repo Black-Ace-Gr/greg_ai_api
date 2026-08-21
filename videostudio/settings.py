@@ -1,7 +1,7 @@
 import os
 
 import dj_database_url
-
+from dotenv import load_dotenv
 """
 Django settings for videostudio project.
 
@@ -30,7 +30,7 @@ DEBUG = False
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ALLOWED_HOSTS = ["*"]
 
-
+load_dotenv(BASE_DIR / ".env")
 # Application definition
 
 INSTALLED_APPS = [
