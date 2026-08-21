@@ -17,3 +17,7 @@ redis>=5.0
 
 # Inference server dependencies live in inference_server/requirements.txt
 # (installed separately, on the GPU worker machine)
+
+djangorestframework-simplejwt
+dj-database-url
+django-cors-headers
