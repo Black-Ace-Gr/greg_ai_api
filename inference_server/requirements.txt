@@ -1,0 +1,11 @@
+# Runs on the rented GPU instance, NOT on the Django host.
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Real model dependencies - only needed when NOT running --mock:
+# torch
+# diffusers
+# transformers
+# accelerate
+# chatterbox-tts
