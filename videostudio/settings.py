@@ -24,12 +24,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-uyxbf4-43_vd2$196y#(ow2j9unjpzqx9nl_znk-a)_6r8q^r#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-DATABASE_URL = "postgresql://neondb_owner:npg_IEdmaJ5Rui6t@ep-ancient-scene-ay5j1o5d-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-
+SECRET_KEY = os.environ.get("SECRET_KEY")
 ALLOWED_HOSTS = ["*"]
 
 
@@ -91,7 +89,8 @@ WSGI_APPLICATION = 'videostudio.wsgi.application'
 
 DATABASES = {
     "default": dj_database_url.parse(
-        os.environ.get("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+        os.environ["DATABASE_URL"],
+        conn_max_age=600,
     )
 }
 
