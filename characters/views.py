@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Character, CharacterReferenceImage
 from .serializers import CharacterSerializer, CharacterReferenceImageSerializer
+from rest_framework import mixins, viewsets
 
 
 class CharacterViewSet(viewsets.ModelViewSet):
@@ -17,3 +18,8 @@ class CharacterViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(character=character)
         return Response(serializer.data, status=201)
+
+
+class CharacterReferenceImageViewSet(mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    queryset = CharacterReferenceImage.objects.all()
+    serializer_class = CharacterReferenceImageSerializer
