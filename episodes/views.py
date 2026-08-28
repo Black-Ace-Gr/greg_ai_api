@@ -60,3 +60,14 @@ class EpisodeViewSet(viewsets.ModelViewSet):
     def episode_jobs(self, request, pk=None):
         episode = self.get_object()
         return Response(GenerationJobSerializer(episode.jobs.all(), many=True).data)
+
+    @action(detail=True, methods=['post'], url_path='submit-script')
+    def submit_script(self, request, pk=None):
+        episode = self.get_object()
+        payload = ScriptSubmitSerializer(data=request.data)
+        payload.is_valid(raise_exception=True)
+        try:
+            episode = services.submit_script(episode, payload.validated_data['panels'])
+        except services.EpisodeLockedError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_409_CONFLICT)
+        return Response(EpisodeDetailSerializer(episode, context={'request': request}).data)

@@ -19,21 +19,32 @@ from django.db import transaction
 from .models import Episode, Panel, GenerationJob
 
 
-def submit_script(episode: Episode, panels_data: list) -> Episode:
-    """
-    Replace this episode's panels with the structured script data the
-    client submitted, then mark it SCRIPTED. Called from
-    EpisodeViewSet.submit_script.
+class EpisodeLockedError(Exception):
+    """Raised when trying to edit a script while generation is actively running."""
+    pass
 
-    panels_data is already-validated data from ScriptSubmitSerializer (via
-    the nested PanelWriteSerializer), so scene/characters have already been
-    resolved to real model instances - build the records directly rather
-    than re-running them through the serializer's own validation, which
-    expects raw primary keys, not instances.
-    """
+
+def submit_script(episode: Episode, panels_data: list) -> Episode:
     from .models import DialogueLine
 
+    if episode.status in (Episode.Status.GENERATING, Episode.Status.ASSEMBLING):
+        raise EpisodeLockedError(
+            "Can't edit the script while generation is in progress "
+            f"(currently {episode.status}). Wait for it to finish or fail first."
+        )
+
     with transaction.atomic():
+        # Wipe already-generated media before dropping the rows - otherwise
+        # the files are orphaned in storage with nothing pointing at them.
+        for panel in episode.panels.all():
+            if panel.generated_image:
+                panel.generated_image.delete(save=False)
+            if panel.narration_audio:
+                panel.narration_audio.delete(save=False)
+            for line in panel.dialogue_lines.all():
+                if line.audio:
+                    line.audio.delete(save=False)
+
         episode.panels.all().delete()
         for panel_data in panels_data:
             dialogue_lines_data = panel_data.pop('dialogue_lines', [])
@@ -42,10 +53,12 @@ def submit_script(episode: Episode, panels_data: list) -> Episode:
             panel.characters.set(characters)
             for line_data in dialogue_lines_data:
                 DialogueLine.objects.create(panel=panel, **line_data)
-        episode.status = Episode.Status.SCRIPTED
-        episode.save(update_fields=['status'])
-    return episode
 
+        if episode.final_video:
+            episode.final_video.delete(save=False)
+        episode.status = Episode.Status.SCRIPTED
+        episode.save(update_fields=['status', 'final_video'])
+    return episode
 
 def queue_generation_jobs(episode: Episode) -> list[GenerationJob]:
     """

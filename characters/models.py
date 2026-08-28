@@ -34,7 +34,7 @@ class CharacterReferenceImage(models.Model):
     model as identity anchors on every generation involving them.
     """
 
-    character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='reference_images')
+    character = models.ForeignKey(Character, on_delete=models.PROTECT, related_name='dialogue_lines')
     image = models.ImageField(upload_to='character_references/')
     label = models.CharField(max_length=100, blank=True, help_text="e.g. 'front view', 'three-quarter'")
     order = models.PositiveIntegerField(default=0)
